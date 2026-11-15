@@ -33,3 +33,29 @@ No copied private runtime internals are required for that narrower hypothesis.
 
 Delivery at this record: local scaffolding and documentation; no published
 package, release, or deployed application.
+
+## 2026-11-15: Public Foldkit command and update reuse
+
+Related: M01 and [the dependency audit](research/foldkit-reuse.md).
+
+The counter now imports the published `foldkit/command` and `foldkit/update`
+entry points. Native-shaped messages are schema-decoded, updates remain pure,
+and a named upstream Command produces a completion after an Effect sleep.
+The experimental bridge tracks command fibers and rejects stale-session
+results; it is not Foldkit's upstream application runner.
+
+### Verification
+
+| Check                                 | Result                 | Evidence or limitation                                                                      |
+| ------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------- |
+| `bun precommit`                       | Passed                 | Strict TypeScript, Oxlint, formatting, six Effect-aware tests, relative documentation links |
+| `bun run build:counter`               | Passed                 | Produces the standalone IIFE at ignored `dist/counter.js`                                   |
+| First macOS JavaScriptCore evaluation | Failed                 | Bundle initialization requires `TextEncoder`, absent from bare JavaScriptCore               |
+| iPhone behavior                       | Not run at this record | Apple host implementation remains in progress                                               |
+
+The engine failure is a host-platform compatibility gap, not proof that the
+public Foldkit APIs depend on DOM rendering. UTF-8 support must be implemented
+and exercised in the real engine before a native compatibility claim.
+
+Delivery at this record: blueprint foundation committed as `70b0b74`; counter
+and workspace changes prepared locally. No release or device installation.

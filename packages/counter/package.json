@@ -1,0 +1,13 @@
+{
+  "name": "@foldkit-native/counter",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/counter.ts",
+    "./native": "./src/native.ts"
+  },
+  "dependencies": {
+    "effect": "4.1.4",
+    "foldkit": "0.170.0"
+  }
+}

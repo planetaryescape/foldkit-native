@@ -6,6 +6,7 @@ An independent, unofficial experiment in running upstream Foldkit application lo
 | --------------------------------------------- | ------------------------------------------------------------- |
 | [Blueprint](blueprint/README.md)              | Intended contracts, accepted goals, and proposed architecture |
 | [Implementation plan](implementation-plan.md) | Ordered milestones and observable completion gates            |
+| [Implementation log](implementation-log.md)   | Observed results, failed probes, and delivery evidence        |
 
 Read the overview, architecture, relevant decisions, then the plan. Code establishes current behavior; the blueprint is not implementation evidence. Delivery history belongs in `docs/implementation-log.md`, maintained separately when work is recorded.
 

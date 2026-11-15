@@ -1,0 +1,4 @@
+{
+  "semi": false,
+  "ignorePatterns": ["bun.lock", "native/apple/**", "dist/**", "node_modules/**"]
+}

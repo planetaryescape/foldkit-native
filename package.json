@@ -1,0 +1,29 @@
+{
+  "name": "foldkit-native",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "build:counter": "bun run scripts/build-counter.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "oxlint --deny-warnings packages scripts",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "docs:check": "bun run scripts/check-docs.ts",
+    "precommit": "bun run typecheck && bun run lint && bun run format:check && bun run test && bun run docs:check"
+  },
+  "devDependencies": {
+    "@effect/vitest": "4.1.4",
+    "@types/bun": "1.4.4",
+    "effect": "4.1.4",
+    "oxfmt": "0.78.0",
+    "oxlint": "1.93.0",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  },
+  "packageManager": "bun@1.3.13"
+}
