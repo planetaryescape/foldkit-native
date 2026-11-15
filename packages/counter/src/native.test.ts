@@ -2,7 +2,8 @@ import { readFile } from "node:fs/promises"
 import { TextDecoder, TextEncoder } from "node:util"
 import { runInNewContext } from "node:vm"
 import { expect, it } from "@effect/vitest"
-import { Effect } from "effect"
+import { Effect, Schema } from "effect"
+import { TelemetryRecord } from "../../telemetry/src/record"
 
 interface Bridge {
   readonly start: () => void
@@ -21,12 +22,14 @@ const makeHost = Effect.gen(function* () {
   )
   const renders: string[] = []
   const logs: string[] = []
+  const telemetry: string[] = []
   const timers = new Map<number, Timer>()
   let nextTimer = 0
   const sandbox: {
     FoldkitNativeCounter: Bridge | undefined
     __foldkitRender: (json: string) => void
     __foldkitLog: (message: string) => void
+    __foldkitTelemetry: ((json: string) => void) | undefined
     TextEncoder: typeof TextEncoder
     TextDecoder: typeof TextDecoder
     setTimeout: (callback: () => void, delay?: number) => number
@@ -35,6 +38,7 @@ const makeHost = Effect.gen(function* () {
     FoldkitNativeCounter: undefined,
     __foldkitRender: (json) => renders.push(json),
     __foldkitLog: (message) => logs.push(message),
+    __foldkitTelemetry: (json) => telemetry.push(json),
     TextEncoder,
     TextDecoder,
     setTimeout: (callback, delay = 0) => {
@@ -75,7 +79,16 @@ const makeHost = Effect.gen(function* () {
     }),
   )
 
-  return { bridge, evaluate, renders, logs, timers, drain }
+  const records = () =>
+    telemetry.map((json) =>
+      Schema.decodeUnknownSync(Schema.fromJsonString(TelemetryRecord), {
+        onExcessProperty: "error",
+      })(json),
+    )
+  const setTelemetry = (callback: ((json: string) => void) | undefined): void => {
+    sandbox.__foldkitTelemetry = callback
+  }
+  return { bridge, evaluate, renders, logs, timers, drain, telemetry, records, setTelemetry }
 })
 
 it.live("rejects malformed JSON, null, unknown tags, and excess fields without rendering", () =>
@@ -183,4 +196,95 @@ it.live("runs both returned commands when two delayed increments are pending", (
     expect(host.logs).toEqual([])
     expect(host.timers.size).toBe(0)
   }).pipe(Effect.scoped, Effect.timeout("5 seconds")),
+)
+
+it.live(
+  "correlates delayed work and completion to dispatch through the bundled native bridge",
+  () =>
+    Effect.gen(function* () {
+      const host = yield* makeHost
+      host.bridge.start()
+      host.bridge.dispatch('{"_tag":"TappedDelayedIncrement"}')
+      yield* host.drain()
+      const records = host.records()
+      const dispatch = records.find(
+        (record) => record._tag === "Span" && record.name === "Counter.dispatch",
+      )
+      const command = records.find(
+        (record) => record._tag === "Span" && record.name === "Counter.command",
+      )
+      const delayed = records.find(
+        (record) => record._tag === "Span" && record.name === "DelayedIncrement",
+      )
+      const completion = records.find(
+        (record) => record._tag === "Span" && record.name === "Counter.complete",
+      )
+      expect(dispatch?._tag).toBe("Span")
+      expect(command?._tag).toBe("Span")
+      if (dispatch?._tag !== "Span" || command?._tag !== "Span") return
+      expect(command).toMatchObject({
+        parentSpanId: dispatch.spanId,
+        traceId: dispatch.traceId,
+        outcome: "success",
+      })
+      expect(delayed).toMatchObject({
+        parentSpanId: command.spanId,
+        traceId: dispatch.traceId,
+        outcome: "success",
+      })
+      expect(completion).toMatchObject({
+        parentSpanId: command.spanId,
+        traceId: dispatch.traceId,
+        messageTag: "CompletedDelayedIncrement",
+        outcome: "success",
+      })
+      expect(host.renders.at(-1)).toBe('{"count":1,"pending":0}')
+    }).pipe(Effect.scoped, Effect.timeout("5 seconds")),
+)
+
+it.live("records cancellation and fixed invalid-message events without message bodies", () =>
+  Effect.gen(function* () {
+    const host = yield* makeHost
+    const secret = "synthetic-secret-invalid-message"
+    host.bridge.start()
+    host.bridge.dispatch(JSON.stringify({ _tag: secret, input: secret }))
+    host.bridge.dispatch('{"_tag":"TappedDelayedIncrement"}')
+    host.bridge.dispose()
+    yield* host.drain()
+    const records = host.records()
+    expect(records).toContainEqual(
+      expect.objectContaining({
+        _tag: "Event",
+        name: "host.invalid_message",
+        outcome: "failure",
+        failureTag: "invalidMessage",
+      }),
+    )
+    expect(records).toContainEqual(
+      expect.objectContaining({ _tag: "Span", name: "Counter.command", outcome: "cancelled" }),
+    )
+    expect(host.telemetry.join("")).not.toContain(secret)
+    expect(host.timers.size).toBe(0)
+    expect(host.logs).toEqual(["Invalid counter message"])
+  }).pipe(Effect.scoped, Effect.timeout("5 seconds")),
+)
+
+it.live(
+  "preserves counter results and timer ownership with absent or failing telemetry callbacks",
+  () =>
+    Effect.gen(function* () {
+      const host = yield* makeHost
+      host.setTelemetry(undefined)
+      host.bridge.start()
+      host.bridge.dispatch('{"_tag":"TappedIncrement"}')
+      host.setTelemetry(() => {
+        throw new Error("telemetry transport failed")
+      })
+      host.bridge.dispatch('{"_tag":"TappedDelayedIncrement"}')
+      yield* host.drain()
+      expect(host.renders.at(-1)).toBe('{"count":2,"pending":0}')
+      host.bridge.dispatch('{"_tag":"TappedDelayedIncrement"}')
+      host.bridge.dispose()
+      expect(host.timers.size).toBe(0)
+    }).pipe(Effect.scoped, Effect.timeout("5 seconds")),
 )

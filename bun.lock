@@ -17,8 +17,15 @@
     "packages/counter": {
       "name": "@foldkit-native/counter",
       "dependencies": {
+        "@foldkit-native/telemetry": "workspace:*",
         "effect": "4.1.4",
         "foldkit": "0.170.0",
+      },
+    },
+    "packages/telemetry": {
+      "name": "@foldkit-native/telemetry",
+      "dependencies": {
+        "effect": "4.1.4",
       },
     },
   },
@@ -34,6 +41,8 @@
     "@emnapi/wasi-threads": ["@emnapi/wasi-threads@2.2.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-JP7OYH38Q7+pyTAe14raZHLQIK7BDKbdwji+Xi3pcd/6QkJYQH3SX4wu6EplGrGJWRepoNzedfm0G3B9Z4e9Rw=="],
 
     "@foldkit-native/counter": ["@foldkit-native/counter@workspace:packages/counter"],
+
+    "@foldkit-native/telemetry": ["@foldkit-native/telemetry@workspace:packages/telemetry"],
 
     "@jridgewell/resolve-uri": ["@jridgewell/resolve-uri@3.1.3", "", {}, "sha512-lhTtjtoEArWBjismtfS761S9Hlyn+nIZqOZVYoZ1Xn82PMNMVnk+jj/NhC4fAXGTs7ydONcJiR5vyQBTMDu27g=="],
 

@@ -1,0 +1,13 @@
+{
+  "name": "@foldkit-native/telemetry",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./record": "./src/record.ts",
+    "./native-tracer": "./src/native-tracer.ts",
+    "./exporter": "./src/exporter.ts"
+  },
+  "dependencies": {
+    "effect": "4.1.4"
+  }
+}

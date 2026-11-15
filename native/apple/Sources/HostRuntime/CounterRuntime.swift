@@ -23,6 +23,19 @@ public enum CounterRuntimeError: Error, CustomStringConvertible {
         case .invalidBridge: return "Bundle must expose FoldkitNativeCounter.start, dispatch, and dispose"
         }
     }
+
+    var telemetryTag: String {
+        switch self {
+        case .wrongThread: return "wrongThread"
+        case .unavailable: return "unavailable"
+        case .disposed: return "disposed"
+        case .invalidLifecycle: return "invalidLifecycle"
+        case .bundleRead: return "bundleRead"
+        case .javaScript: return "javaScript"
+        case .invalidSnapshot: return "invalidSnapshot"
+        case .invalidBridge: return "invalidBridge"
+        }
+    }
 }
 
 public enum CounterEvent: String {
@@ -51,19 +64,24 @@ public final class CounterRuntime {
         let arguments: JSValue
     }
     private var timers: [Int: ScheduledCallback] = [:]
+    private let telemetry: HostTelemetry
 
-    public init() {}
+    public init(telemetry: HostTelemetry = HostTelemetry()) {
+        self.telemetry = telemetry
+    }
 
     deinit {
         for entry in timers.values { entry.timer.invalidate() }
+        if !isDisposed { telemetry.shutdown() }
     }
 
     public func start(bundleURL: URL) -> Result<Void, CounterRuntimeError> {
-        guard Thread.isMainThread else { return .failure(.wrongThread) }
-        guard !isDisposed else { return .failure(.disposed) }
-        guard !started else { return .failure(.invalidLifecycle) }
+        telemetry.event("host.start")
+        guard Thread.isMainThread else { return rejected(.wrongThread) }
+        guard !isDisposed else { return rejected(.disposed) }
+        guard !started else { return rejected(.invalidLifecycle) }
         started = true
-        guard let context = JSContext() else { return .failure(.unavailable) }
+        guard let context = JSContext() else { return rejected(.unavailable) }
         self.context = context
         context.exceptionHandler = { [weak self] _, exception in
             self?.record(.javaScript(exception?.toString() ?? "Unknown exception"))
@@ -75,7 +93,7 @@ public final class CounterRuntime {
         do {
             source = try String(contentsOf: bundleURL, encoding: .utf8)
         } catch {
-            return .failure(.bundleRead(error.localizedDescription))
+            return rejected(.bundleRead(error.localizedDescription))
         }
         context.evaluateScript(source, withSourceURL: bundleURL)
         if let failure { return .failure(failure) }
@@ -86,9 +104,11 @@ public final class CounterRuntime {
           return typeof FoldkitNativeCounter[key] === 'function';
         })
         """)?.toBool() ?? false
-        guard valid else { return .failure(.invalidBridge) }
+        guard valid else { return rejected(.invalidBridge) }
         bridge = context.objectForKeyedSubscript("FoldkitNativeCounter")
-        return invoke("start", arguments: [])
+        let result = invoke("start", arguments: [])
+        if case .success = result { telemetry.event("host.started") }
+        return result
     }
 
     public func dispatch(_ event: CounterEvent) -> Result<Void, CounterRuntimeError> {
@@ -100,7 +120,7 @@ public final class CounterRuntime {
     }
 
     public func dispose() -> Result<Void, CounterRuntimeError> {
-        guard Thread.isMainThread else { return .failure(.wrongThread) }
+        guard Thread.isMainThread else { return rejected(.wrongThread) }
         guard !isDisposed else { return .success(()) }
         let result: Result<Void, CounterRuntimeError>
         if bridge != nil {
@@ -117,13 +137,22 @@ public final class CounterRuntime {
         onSnapshot = nil
         onFailure = nil
         onLog = nil
+        switch result {
+        case .success: telemetry.event("host.disposed")
+        case .failure: telemetry.event("host.disposed", outcome: "failure")
+        }
+        telemetry.shutdown()
         return result
     }
 
+    public func shutdownTelemetry(completion: @escaping () -> Void) {
+        telemetry.shutdown(completion: completion)
+    }
+
     private func invoke(_ method: String, arguments: [Any]) -> Result<Void, CounterRuntimeError> {
-        guard Thread.isMainThread else { return .failure(.wrongThread) }
-        guard !isDisposed else { return .failure(.disposed) }
-        guard let bridge, let context else { return .failure(.invalidLifecycle) }
+        guard Thread.isMainThread else { return rejected(.wrongThread) }
+        guard !isDisposed else { return rejected(.disposed) }
+        guard let bridge, let context else { return rejected(.invalidLifecycle) }
         failure = nil
         context.exception = nil
         bridge.invokeMethod(method, withArguments: arguments)
@@ -132,8 +161,14 @@ public final class CounterRuntime {
     }
 
     private func record(_ error: CounterRuntimeError) {
+        telemetry.event("host.failure", outcome: "failure", failureTag: error.telemetryTag)
         failure = error
         onFailure?(error)
+    }
+
+    private func rejected(_ error: CounterRuntimeError) -> Result<Void, CounterRuntimeError> {
+        telemetry.event("host.failure", outcome: "failure", failureTag: error.telemetryTag)
+        return .failure(error)
     }
 
     private func receive(_ value: JSValue) {
@@ -149,6 +184,13 @@ public final class CounterRuntime {
     }
 
     private func installGlobals(in context: JSContext) {
+        if telemetry.enabled {
+            let receiveTelemetry: @convention(block) (JSValue) -> Void = { [weak self] value in
+                guard let self, !self.isDisposed, value.isString, let text = value.toString() else { return }
+                self.telemetry.receive(text)
+            }
+            context.setObject(receiveTelemetry, forKeyedSubscript: "__foldkitTelemetry" as NSString)
+        }
         let render: @convention(block) (JSValue) -> Void = { [weak self] value in
             self?.receive(value)
         }
