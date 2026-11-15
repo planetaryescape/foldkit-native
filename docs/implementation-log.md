@@ -161,3 +161,18 @@ build has not been installed on the physical phone, so M01 remains active and
 there is no completed mobile handoff. Resolving local Apple signing
 authorization is the next device-validation step; native view expression and
 the reusable development host remain subsequent implementation work.
+
+## 2026-11-15: Publish the verified source candidate
+
+Native source revision: `cc5f015`. The blueprint, upstream counter integration,
+compiled-bridge checks, visible async demo, Apple host, and CI workflow are
+committed and pushed to public `main`. The host-local ignore file keeps
+generated native artifacts out of Git when the host directory is used
+independently.
+
+GitHub CI is running the TypeScript gate and the macOS engine/unsigned-iOS
+checks for that revision. Local simulator evidence remains local; no device
+identifiers, signing configuration, screenshots, or crash reports are tracked.
+
+Delivery: pushed source, no release, no physical-device installation, and no
+completed M01 handoff. M01V and M02 are still unimplemented.
