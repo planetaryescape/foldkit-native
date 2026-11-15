@@ -21,7 +21,7 @@ export const initialModel = (): Model => ({ count: 0, pending: 0 })
 
 export const DelayedIncrement = Command.define("DelayedIncrement", {
   messages: [Message.cases.CompletedDelayedIncrement],
-  execute: Effect.sleep("500 millis").pipe(
+  execute: Effect.sleep("3 seconds").pipe(
     Effect.as(Message.cases.CompletedDelayedIncrement.make({})),
   ),
 })

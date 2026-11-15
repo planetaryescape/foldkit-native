@@ -103,7 +103,7 @@ it.live("disposal cancels pending timers and ignores subsequent dispatch", () =>
     const host = yield* makeHost
     host.bridge.start()
     host.bridge.dispatch('{"_tag":"TappedDelayedIncrement"}')
-    expect(Array.from(host.timers.values(), (timer) => timer.delay)).toEqual([500])
+    expect(Array.from(host.timers.values(), (timer) => timer.delay)).toEqual([3000])
     host.bridge.dispose()
     expect(host.timers.size).toBe(0)
     host.bridge.dispatch('{"_tag":"TappedIncrement"}')
@@ -121,7 +121,7 @@ it.live("restart in the same global cancels old work and starts a fresh usable s
     host.bridge.start()
     host.bridge.dispatch('{"_tag":"TappedDelayedIncrement"}')
     const oldTimers = Array.from(host.timers.values())
-    expect(oldTimers.map((timer) => timer.delay)).toEqual([500])
+    expect(oldTimers.map((timer) => timer.delay)).toEqual([3000])
     host.bridge.start()
     expect(host.timers.size).toBe(0)
     for (const timer of oldTimers) timer.callback()
@@ -145,7 +145,7 @@ it.live("reevaluating the bundle disposes the previous global counter and its pe
     host.bridge.start()
     host.bridge.dispatch('{"_tag":"TappedDelayedIncrement"}')
     const oldTimers = Array.from(host.timers.values())
-    expect(oldTimers.map((timer) => timer.delay)).toEqual([500])
+    expect(oldTimers.map((timer) => timer.delay)).toEqual([3000])
     const replacement = host.evaluate()
     expect(replacement).not.toBe(host.bridge)
     expect(host.timers.size).toBe(0)
@@ -171,7 +171,7 @@ it.live("runs both returned commands when two delayed increments are pending", (
     host.bridge.start()
     host.bridge.dispatch('{"_tag":"TappedDelayedIncrement"}')
     host.bridge.dispatch('{"_tag":"TappedDelayedIncrement"}')
-    expect(Array.from(host.timers.values(), (timer) => timer.delay)).toEqual([500, 500])
+    expect(Array.from(host.timers.values(), (timer) => timer.delay)).toEqual([3000, 3000])
     yield* host.drain()
     expect(host.renders).toEqual([
       '{"count":0,"pending":0}',

@@ -18,7 +18,7 @@ Sources: the [published Foldkit archive](https://registry.npmjs.org/foldkit/-/fo
 - `foldkit/command`: `Command.define` constructs the named `DelayedIncrement` command.
 - `foldkit/update`: `Update.Return` and `Update.Step` specify transition contracts; `Update.combine` composes completion steps at runtime.
 
-The command's public `effect` field produces `CompletedDelayedIncrement` after 500ms. This is a real upstream Command, not an application-created imitation. Update remains pure and does not run the command. Model changes allocate new records.
+The command's public `effect` field produces `CompletedDelayedIncrement` after 3 seconds. This is a real upstream Command, not an application-created imitation. Update remains pure and does not run the command. Model changes allocate new records.
 
 The counter does **not** import Foldkit runtime, mount, HTML, DOM, rendering, subscriptions, scene tests, React, or React Native. It does not import upstream private paths. Inspecting upstream implementation files for evidence does not make those paths supported application imports.
 

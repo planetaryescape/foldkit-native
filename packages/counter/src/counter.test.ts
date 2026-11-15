@@ -32,7 +32,7 @@ it.effect("returns a named command and applies its delayed typed message", () =>
       return yield* Effect.die("Expected delayed increment command")
     }
     const fiber = yield* command.effect.pipe(Effect.forkScoped)
-    yield* TestClock.adjust("499 millis")
+    yield* TestClock.adjust("2999 millis")
     expect(fiber.pollUnsafe()).toBeUndefined()
     expect(waiting.model).toEqual({ count: 0, pending: 1 })
     yield* TestClock.adjust("1 millis")
