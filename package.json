@@ -9,7 +9,7 @@
   "scripts": {
     "build:counter": "bun run scripts/build-counter.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "bun run build:counter && vitest run",
     "lint": "oxlint --deny-warnings packages scripts",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",

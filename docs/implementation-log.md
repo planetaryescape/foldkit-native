@@ -59,3 +59,20 @@ and exercised in the real engine before a native compatibility claim.
 
 Delivery at this record: blueprint foundation committed as `70b0b74`; counter
 and workspace changes prepared locally. No release or device installation.
+
+## 2026-11-15: Exercise the compiled bridge lifecycle
+
+Related: M01. The tests now evaluate the actual bundled IIFE in isolated
+JavaScript contexts through the same host callbacks and timer bindings used by
+the native adapter. Controlled host timers exercise stale callbacks without
+wall-clock sleeps.
+
+Five additional tests cover malformed serialized input, disposal, same-global
+restart, bundle replacement, and two concurrently pending commands. These are
+bridge-contract checks, not Apple-engine or physical-device evidence.
+
+The test command builds the bundle first, so a clean checkout cannot
+accidentally test a missing or stale artifact.
+
+Delivery at this record: the public command/update experiment is committed as
+`ab0ec8c` and pushed to `main`; bridge checks are prepared locally.
