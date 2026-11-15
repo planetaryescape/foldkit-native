@@ -35,6 +35,12 @@ Expected decode, loading, compatibility, and command failures remain distinguish
 
 ## First consumer: counter
 
+The initial implementation reuses upstream command/update APIs and projects
+counter state into a fixed UIKit view hierarchy. This proves native hosting of
+application logic, not native rendering of Foldkit-authored views. A
+JavaScript-authored native view vocabulary and renderer remain a separate
+implementation gap.
+
 Proposed usage is intentionally behavioral rather than an invented API:
 
 1. Define a counter model, increment message, and asynchronous command outcome messages through verified Foldkit public APIs.

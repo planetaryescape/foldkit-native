@@ -1,0 +1,54 @@
+name: FoldkitNative
+options:
+  bundleIdPrefix: org.planetaryescape
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  FoldkitNative:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes:
+          - Info.plist
+      - path: Sources/HostRuntime
+      - path: ../../dist/counter.js
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.planetaryescape.foldkitnative
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_FILE: App/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - sdk: JavaScriptCore.framework
+  FoldkitNativeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: UITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.planetaryescape.foldkitnative.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: FoldkitNative
+        TARGETED_DEVICE_FAMILY: "1"
+    dependencies:
+      - target: FoldkitNative
+schemes:
+  FoldkitNative:
+    build:
+      targets:
+        FoldkitNative: all
+        FoldkitNativeUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - FoldkitNativeUITests

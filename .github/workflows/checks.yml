@@ -18,3 +18,25 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun precommit
       - run: bun run build:counter
+
+  apple-host:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+      - run: bun install --frozen-lockfile
+      - run: bun run build:counter
+      - run: swift run --package-path native/apple HostProbe dist/counter.js
+      - run: brew install xcodegen
+      - run: xcodegen generate --spec native/apple/project.yml
+      - name: Compile the iOS app without signing
+        run: >-
+          xcodebuild -quiet
+          -project native/apple/FoldkitNative.xcodeproj
+          -scheme FoldkitNative
+          -configuration Debug
+          -destination 'generic/platform=iOS'
+          -derivedDataPath native/apple/DerivedData
+          CODE_SIGNING_ALLOWED=NO build

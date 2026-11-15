@@ -44,13 +44,18 @@ Status: iOS-first sequencing proposed; physical iPhone milestone accepted; Andro
 
 ## D005: Select the engine through evidence
 
-Status: proposed selection process; engine unresolved.
+Status: JavaScriptCore implemented as the first candidate; final engine choice unresolved.
 
 - **Choice:** evaluate the smallest viable embedded engine against reused Foldkit public APIs, Effect, our runner, bundling, timers, callbacks, and native scheduling.
 - **Alternatives:** a JavaScriptCore-first or Hermes-first choice without a probe risks discovering missing runtime assumptions after building the bridge.
 - **Rationale:** engine availability is not compatibility evidence.
 - **Consequences:** record pinned versions and missing host globals before committing to an engine API.
 - **Revisit when:** a physical-device probe establishes compatibility or a required capability rules a candidate out.
+
+Candidate evidence: the macOS JavaScriptCore probe runs the counter and its
+async command after explicit timer and UTF-8 host support. This establishes a
+narrow compatibility result, not complete Effect platform support. iOS and
+physical-device results remain separately recorded in the implementation log.
 
 ## D006: Extract only after working slices
 

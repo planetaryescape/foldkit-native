@@ -25,9 +25,29 @@ Checks: public-API compatibility probe, transition/command behavior checks, real
 
 Reuse boundary: our runner owns lifecycle/message execution; upstream browser-runtime reuse and complete runtime compatibility are not claimed. Missing public runtime hooks are later extraction gaps, not blockers to this bounded proof of concept. Desktop tests and native scaffolding are partial evidence only.
 
+## M01V: Express the native counter view in TypeScript
+
+Status: planned. Depends on M01. This closes the gap between hosting Foldkit
+application logic and expressing native UI from TypeScript.
+
+Scope: a small native view vocabulary for containers, text, and buttons; a
+schema-decoded view description; and native identity-preserving updates.
+This is a new native target, not interpretation of Foldkit's HTML VNodes.
+
+Acceptance: change the counter's text, control structure, or button action in
+TypeScript and observe the corresponding native UI after rebuilding the
+application bundle. Swift supplies platform primitives rather than a
+counter-specific screen layout. Existing controls retain identity across
+model updates.
+
+Checks: malformed view descriptions, event-to-message routing, real native
+updates, keyboard/accessibility implications as primitives expand, and
+physical-device behavior. Do not call the fixed UIKit counter a general
+Foldkit native renderer.
+
 ## M02: Reusable development host
 
-Status: planned. Depends on M01 and [D003](blueprint/02-decision-log.md#d003-reusable-development-host).
+Status: planned. Depends on M01, M01V, and [D003](blueprint/02-decision-log.md#d003-reusable-development-host).
 
 Scope: Effect-based bundle tooling, trusted local connection, compatibility handshake, explicit reload, and host/application diagnostics.
 

@@ -8,7 +8,7 @@ class DocumentationCheckFailed extends Schema.TaggedError<DocumentationCheckFail
 ) {}
 
 const check = Effect.gen(function* () {
-  const paths = ["README.md", "AGENTS.md"]
+  const paths = ["README.md", "AGENTS.md", "native/apple/README.md"]
   const documentation = yield* Effect.tryPromise({
     try: () => Array.fromAsync(new Bun.Glob("docs/**/*.md").scan()),
     catch: (cause) => new DocumentationCheckFailed({ detail: String(cause) }),
