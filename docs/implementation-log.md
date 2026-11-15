@@ -237,3 +237,97 @@ the Mac using the same GUI-session approach. A separate cleanup check found no
 remaining temporary Foldkit launch jobs and confirmed the generated job file
 was removed. The runner's argument, plist-escaping, and completion-watcher
 checks bring the TypeScript suite to fifteen passing tests.
+
+## 2026-11-15: Select the hosted telemetry target
+
+Related: T01. The owner authorized Sentry or Planetary Escape and then left
+with the phone. Planetary Escape's authenticated OTLP endpoint is selected.
+No phone interactions or updated installations are planned while it is away.
+
+A connectivity span was accepted by the public collector and independently
+retrieved by trace ID from Tempo. This verifies authentication and retention,
+not application instrumentation. The native-probe exporter still needs its
+own trace and log retrieval before delivery is claimed.
+
+Hosted ingestion credentials remain in the existing SOPS/age path on the Mac,
+scoped to the sender process. No shared infrastructure, credentials, retention,
+or authentication policy was changed.
+
+Implementation work separates native safe-record generation from the
+Effect-owned desktop exporter. This avoids placing the shared hosted bearer
+token in the JavaScript bundle or app.
+
+## 2026-11-15: Retrieve native-probe telemetry from both backends
+
+Related: T01. The instrumented macOS JavaScriptCore probe completed
+successfully with explicit export enabled. Native records were decoded and
+sent through Effect's protobuf OTLP serialization/exporter.
+
+Backend evidence:
+
+- Tempo returned real `Counter.dispatch` traces for
+  `foldkit-native.apple-host`.
+- Trace `719144ede8f18160ee13936038089bda` contains a dispatch parent,
+  `Counter.command`, `DelayedIncrement`, and `Counter.complete` with the
+  expected parent-span relationships and approximately three seconds of
+  command work.
+- Loki returned native lifecycle events and span-summary logs, including
+  cancellation outcomes and standard trace/span correlation.
+- A categorized Loki query confirmed service/environment are stream labels;
+  trace/span IDs and observed timestamps are structured metadata rather than
+  indexed labels.
+
+This is real application-probe delivery evidence, not only a collector HTTP
+acknowledgement. Read-only queries used temporary loopback port-forwards
+which were stopped afterward. No shared infrastructure was changed.
+
+The initial observer inherited exporter headers into its native child even
+though native code did not use or export them. The observer boundary is being
+tightened to remove those credentials and disable duplicate relay transport;
+the final version must be rechecked before claiming that boundary complete.
+
+The physical phone still runs the earlier verified counter build, without
+these telemetry hooks. No updated app was installed or exercised while the
+owner was away.
+
+## 2026-11-15: Verify the final telemetry boundary and relay
+
+Related: T01. The observer now strips hosted OTLP headers, secret-manager
+variables, and relay configuration from the native child. A synthetic-secret
+test covers that boundary. Export still succeeds with the credential retained
+only by the desktop exporter.
+
+The final macOS native probe passed strict record validation, nonzero IDs,
+UInt64 timestamp limits, safe error projection, queue pressure, exporter
+outage isolation, transport release, and explicit disposal. Native and desktop
+relay tokens now share the same 32-to-256-byte limits.
+
+### Verification
+
+| Check                                   | Result   | Evidence or limitation                                                                               |
+| --------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `bun precommit`                         | Passed   | Forty-three tests plus types, lint, formatting, bundle production, and documentation links           |
+| Final macOS native probe                | Passed   | Instrumented JavaScriptCore counter and native telemetry lifecycle                                   |
+| Authenticated native HTTP relay         | Passed   | Real URLSession sender through the loopback relay to hosted protobuf OTLP                            |
+| Unauthenticated relay request           | Rejected | HTTP 401                                                                                             |
+| Record with private extra field         | Rejected | HTTP 400; input not admitted                                                                         |
+| Relay shutdown                          | Passed   | SIGTERM exit 143, scoped exporter flush, no lingering relay                                          |
+| Tempo retrieval after final relay run   | Passed   | Trace `38b32a1cc4a8453e9eb2464d765a8b57`, approximately 3005ms, four correctly related counter spans |
+| Loki retrieval after final relay run    | Passed   | Native lifecycle, invalid-message, and correlated command/span records                               |
+| Latest unsigned iOS compilation         | Passed   | New host diagnostics and transport compile for the device target                                     |
+| Latest simulator UI suite               | Passed   | Three tests, zero failures or skips                                                                  |
+| Updated physical-device telemetry build | Deferred | Owner away with phone; no new install or device interaction                                          |
+
+Invalid application messages are WARN rather than error incidents.
+Cancellation is not exported as an ordinary command failure. Model contents,
+arbitrary causes/stacks, credentials, paths, and device identifiers are excluded.
+Telemetry remains opt-in, and no shared infrastructure was changed.
+
+Delivery at this record: telemetry source and runbook are prepared for atomic
+commits. Desktop export and relay delivery are verified. Physical-device and
+background telemetry delivery are not claimed.
+
+Instrumentation source is committed as `9dbbc1d`. The following tooling commit
+adds the secure observer, authenticated relay, configuration example, and
+operator runbook. The phone continues to run the counter build verified before
+these telemetry changes; its update remains deferred.

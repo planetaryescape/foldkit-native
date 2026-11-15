@@ -90,6 +90,27 @@ Acceptance: playback and reported state remain coherent across background/foregr
 
 Checks: platform configuration, background playback, interruption and route changes, foreground reconciliation, and reload behavior. Do not assume JavaScript continues running in the background.
 
+## T01: Inspect the native runtime through Planetary Escape
+
+Status: active. The owner requested telemetry after the physical counter proof.
+No updated phone build will be installed while the owner is away with it.
+
+Scope: safe Effect spans, native host events, an opt-in authenticated
+development relay, and bounded desktop OTLP export. The shared ingestion token
+stays in desktop secret management, not in the app.
+
+Acceptance: retrieve a real native-probe trace and log from the actual Tempo
+and Loki backends. Verify parentage, safe fields, malformed input rejection,
+bounded queues and shutdown, and exporter-outage isolation. No raw model or
+exception payload may leave the runtime.
+
+Checks: Effect tracer/recording-client tests, Mac host/probe export, read-only
+backend queries, native build and simulator checks. Physical-device telemetry
+requires a later install and is not inferred from desktop success.
+
+See [the observability contract](blueprint/03-observability.md) and the
+implementation log for delivery evidence.
+
 ## Deferred work
 
 Android implementation follows evidence from these slices. Framework extraction, engine portability, EAS build/distribution, and richer native bindings require concrete needs and separate acceptance criteria. None is claimed as implemented.

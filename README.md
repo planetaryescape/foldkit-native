@@ -23,6 +23,14 @@ bun run build:counter
 The Apple host requires macOS and Xcode. See the
 [Apple host instructions](native/apple/README.md).
 
+## Telemetry
+
+Use `bun run apple:observe` on the Mac with explicitly enabled, securely
+configured export. See [Inspect the native host](docs/telemetry.md).
+The hosted credential stays on the desktop. Native telemetry requires an
+updated build and an explicit transport; it is not active in the earlier
+phone build.
+
 ## Documentation
 
 - [Documentation map](docs/README.md)

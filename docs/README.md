@@ -12,6 +12,9 @@ Read the overview, architecture, relevant decisions, then the plan. Code establi
 
 ## Evidence boundary
 
+For telemetry configuration and backend queries, see
+[Inspect the native host](telemetry.md).
+
 This documentation was initially drafted against an empty repository on 2026-11-15. Implementation is now in progress. These documents do not establish native build, physical-device, or development-host verification.
 
 An accepted product goal is not proof of runtime compatibility. Public Foldkit command/update reuse and the project's experimental native runner are distinct responsibilities. Source paths are plain text; implementation evidence belongs in the delivery history.

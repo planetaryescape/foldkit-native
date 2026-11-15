@@ -4,11 +4,12 @@
 
 ## Document index
 
-| #   | Document                           | What it covers                                                             |
-| --- | ---------------------------------- | -------------------------------------------------------------------------- |
-| 00  | [Overview](00-overview.md)         | Identity, accepted goals, non-goals, and open questions                    |
-| 01  | [Architecture](01-architecture.md) | Runtime boundaries, native ownership, development loop, and evidence gates |
-| 02  | [Decision log](02-decision-log.md) | Stable decisions, alternatives, rationale, and revisit conditions          |
+| #   | Document                             | What it covers                                                                  |
+| --- | ------------------------------------ | ------------------------------------------------------------------------------- |
+| 00  | [Overview](00-overview.md)           | Identity, accepted goals, non-goals, and open questions                         |
+| 01  | [Architecture](01-architecture.md)   | Runtime boundaries, native ownership, development loop, and evidence gates      |
+| 02  | [Decision log](02-decision-log.md)   | Stable decisions, alternatives, rationale, and revisit conditions               |
+| 03  | [Observability](03-observability.md) | Native diagnostics, safe Effect tracing, export ownership, and backend evidence |
 
 ## For coding agents
 
@@ -21,16 +22,17 @@
 
 ## Stack target
 
-| Responsibility                      | Direction                                                                  | Status                                         |
-| ----------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------- |
-| Application model and update        | Public API reuse from Foldkit 0.170.0 with project-owned native processing | Accepted direction, implementation in progress |
-| TypeScript runtime and tooling      | Effect 4.1.4, Bun package and script workflow                              | Accepted direction, implementation in progress |
-| UI                                  | True native platform bindings                                              | Owner-accepted goal                            |
-| First implementation platform       | iOS                                                                        | Proposed sequencing                            |
-| JavaScript engine and native bridge | Select through compatibility evidence                                      | Unresolved                                     |
-| Development loop                    | Reusable host, bundle reload, logs, errors, version handshake              | Owner-accepted goal                            |
-| Build and distribution              | Evaluate EAS independently of Expo Go                                      | Optional, unverified                           |
-| Android                             | Later platform work                                                        | Planned, not implemented                       |
+| Responsibility                      | Direction                                                                  | Status                                                     |
+| ----------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Application model and update        | Public API reuse from Foldkit 0.170.0 with project-owned native processing | Counter verified on a physical iPhone                      |
+| TypeScript runtime and tooling      | Effect 4.1.4, Bun package and script workflow                              | Counter and device tooling implemented                     |
+| UI                                  | True native platform bindings                                              | Fixed UIKit counter verified; TypeScript views planned     |
+| First implementation platform       | iOS                                                                        | Counter prototype verified                                 |
+| JavaScript engine and native bridge | JavaScriptCore with explicit timer and UTF-8 host support                  | Counter candidate verified, broader compatibility unproven |
+| Development loop                    | Reusable host, bundle reload, logs, errors, version handshake              | Owner-accepted goal                                        |
+| Build and distribution              | Evaluate EAS independently of Expo Go                                      | Optional, unverified                                       |
+| Android                             | Later platform work                                                        | Planned, not implemented                                   |
+| Observability                       | Planetary Escape OTLP, native safe records, Effect-owned desktop export    | In progress; updated phone build deferred                  |
 
 ## Authority and delivery
 

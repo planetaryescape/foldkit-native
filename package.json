@@ -8,6 +8,8 @@
   "type": "module",
   "scripts": {
     "apple:device": "bun run scripts/apple-device.ts",
+    "apple:observe": "bun run scripts/observe-apple.ts",
+    "telemetry:relay": "bun run scripts/telemetry-relay.ts",
     "build:counter": "bun run scripts/build-counter.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun run build:counter && vitest run",

@@ -60,6 +60,101 @@ completion with a five-second timeout, malformed-event rejection, continued
 dispatch, no late renders after disposing a pending command, and a fresh runtime
 returning to its initial snapshot without stale completion.
 
+## Opt-in safe telemetry
+
+Telemetry is disabled by default. With `FOLDKIT_TELEMETRY_STDOUT=1`, the host
+installs the optional `__foldkitTelemetry(jsonString)` callback before evaluating
+the bundle, and writes one-line records prefixed with `FOLDKIT_TELEMETRY `.
+An Effect/Bun process can consume these records and own OTLP export. The native
+app contains no collector credentials or exporter SDK.
+
+```sh
+FOLDKIT_TELEMETRY_STDOUT=1 swift run --package-path native/apple HostProbe "$PWD/dist/counter.js"
+```
+
+Swift independently parses callback JSON, rejecting non-string values, unknown
+keys, records over 16 KiB of UTF-8, and fields outside the fixed wire contract:
+
+- `Span`: `name` is `Counter.start`, `Counter.dispatch`, `Counter.command`,
+  `Counter.complete`, `Counter.dispose`, or `DelayedIncrement`; lowercase
+  nonzero 32-digit `traceId`, nonzero 16-digit `spanId`, optional nonzero
+  16-digit `parentSpanId`;
+  `startTimeUnixNano` and `endTimeUnixNano` are 1-20 decimal digit strings in
+  `0...18446744073709551615`, with end greater than or equal to start;
+  `outcome` is `success`, `failure`, or `cancelled`. Optional `messageTag` is
+  one of the three counter tags; optional `commandName` is `DelayedIncrement`.
+- `Event`: `name` is `host.start`, `host.started`, `host.failure`,
+  `host.disposed`, or `host.invalid_message`; `outcome` uses the same three
+  values; `timestampUnixNano` is a 1-20 decimal digit string in
+  `0...18446744073709551615`. Optional
+  `failureTag` is `wrongThread`, `unavailable`, `disposed`,
+  `invalidLifecycle`, `bundleRead`, `javaScript`, `invalidSnapshot`,
+  `invalidBridge`, or `invalidMessage`.
+
+The host emits startup attempts before bundle loading, successful startup,
+typed native failures, and disposal. Failure records contain only the actual
+`CounterRuntimeError` tag, never its associated exception or path. Callback
+payloads never contain model values, raw messages, configuration, or device
+identifiers. `host.invalid_message` may be supplied by the TypeScript boundary
+with the fixed `invalidMessage` tag; arbitrary logs are not exported.
+
+Each `CounterRuntime` owns its telemetry transport. Dispatch I/O performs writes
+off the UI thread, admits at most 128 outstanding records, and drops new records
+when full. Invalid records are silently discarded. I/O failures drop records
+without changing runtime results or recursively exporting failures. Queue overflow and
+stdout/relay failures emit fixed local OSLog diagnostics, at most once per
+runtime for each of those three categories. They never include payloads, URLs,
+tokens, status values, or raw errors, and never use the telemetry callback or
+exporter. Disabled telemetry emits no diagnostics. This is best-effort
+diagnostic delivery, not an audit log or durable buffer.
+
+Optional HTTP relay requires both `FOLDKIT_TELEMETRY_RELAY_URL` and
+`FOLDKIT_TELEMETRY_SESSION_TOKEN`. The token must be an opaque, private per-run
+value of 32-512 visible ASCII bytes without whitespace, never the shared
+collector bearer. Each request is `POST application/json`, containing one safe
+record directly, with `Authorization: Bearer <session token>`. Only HTTPS or
+HTTP on `localhost`, `127.0.0.1`, or `::1` is accepted. URL user information,
+query strings, fragments, and redirects are rejected. Invalid configuration
+silently disables relay without printing any URL, token, or config value.
+No network transport is enabled by default. Setting both opt-ins explicitly
+enables both outputs under the same 128-record capacity.
+
+The ephemeral URLSession disables cookies, credential storage, and cache;
+requests time out after one second, with a 1.5-second resource deadline and no
+application retries. Response bodies are discarded at headers instead of
+buffered. Cancellation, HTTP failure, and exporter failure never affect the
+counter result. Native code never reads desktop SOPS or Keychain configuration.
+No ATS exceptions are added; platform policy may further restrict HTTP relay.
+The loopback address refers to the current host, not a paired desktop when
+running on a physical iPhone.
+
+Explicit disposal closes admission and asynchronously drains transport work.
+Shutdown cancels outstanding I/O after at most two seconds without blocking the
+main thread. `shutdownTelemetry(completion:)` provides a main-queue completion
+for lifecycle owners that need to observe the drain deadline. The CLI pumps its
+run loop at exit to observe completion; UIKit disposal never waits on export.
+Process termination and scene teardown do not guarantee delivery.
+Abandoning a runtime without explicit disposal also initiates bounded telemetry
+shutdown from `deinit`, breaking the relay session/delegate ownership cycle
+without waiting on the UI thread or claiming successful JS disposal.
+
+The probe additionally captures the real transport to local temporary files
+and checks disabled/no-output behavior, exact valid-span forwarding, malformed
+record rejection without affecting startup, secret-sentinel exclusion from raw
+JavaScript failures, lifecycle events, and an unwritable exporter that must not
+change the counter result. A 10,000-record flood into an unread pipe checks that
+backpressure does not block counter startup and shutdown still meets its
+deadline. These new checks require macOS execution; source
+implementation alone does not establish a passing Apple build or probe.
+Relay checks reject unsafe URL/auth configuration and exercise a refused
+loopback connection without changing startup/disposal outcomes. The probe also
+abandons a relay-enabled runtime without disposal and checks that the runtime
+and telemetry transport are released within the shutdown budget. Successful
+relay delivery, authentication, redirect refusal, and remote timeout behavior
+still require an actual relay fixture or development-host integration check.
+No instrumented build has been installed on the physical phone as part of this
+work; macOS/simulator checks are not physical-device evidence.
+
 ## Generate and build the iPhone app
 
 Install XcodeGen locally, then run from the repository root after bundling:
