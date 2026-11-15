@@ -1,12 +1,12 @@
 # Implementation plan
 
-Status: M01 active, later milestones planned; not completion evidence. Initially drafted 2026-11-15 against an empty repository; implementation is now in progress and does not yet satisfy device acceptance gates.
+Status: M01 complete for the bounded counter proof; later milestones planned. Completion evidence lives in the implementation log, not this checklist.
 
 Follow the [blueprint](blueprint/README.md). Confirmed source paths are `packages/counter`, `native/apple`, and `scripts`. Dependency pins are Foldkit 0.170.0 and Effect 4.1.4. Record actual results and source revisions separately in `docs/implementation-log.md`; do not mark completion from this checklist alone.
 
 ## M01: Foldkit counter on a physical iPhone
 
-Status: active. Native proof of concept and public import compatibility are in progress, not complete. Depends on [D001](blueprint/02-decision-log.md#d001-use-real-upstream-foldkit), [D002](blueprint/02-decision-log.md#d002-native-ui-and-effect-typescript), and engine evidence under [D005](blueprint/02-decision-log.md#d005-select-the-engine-through-evidence).
+Status: complete for the bounded counter proof. Physical-device UI verification and the shared-host explicit disposal probe passed. Graceful UIKit scene disconnection/reconnection remains outside direct device-test coverage. Depends on [D001](blueprint/02-decision-log.md#d001-use-real-upstream-foldkit), [D002](blueprint/02-decision-log.md#d002-native-ui-and-effect-typescript), and engine evidence under [D005](blueprint/02-decision-log.md#d005-select-the-engine-through-evidence). See [physical-device evidence](implementation-log.md#2026-11-15-physical-iphone-counter-verification).
 
 Scope:
 

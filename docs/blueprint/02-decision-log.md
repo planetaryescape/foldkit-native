@@ -76,3 +76,13 @@ Status: accepted project identity.
 - **Rationale:** make scope, ownership, and evidence trustworthy.
 - **Consequences:** no personal device IDs, signing material, private notes, or corporate data in docs or examples.
 - **Revisit when:** an explicit upstream relationship changes attribution; privacy requirements continue to apply.
+
+## D008: Sign device builds in the desktop security session
+
+Status: implemented development workflow.
+
+- **Choice:** run remote-initiated signed device builds as temporary jobs in the current user's GUI launch domain.
+- **Alternatives:** an SSH security session can see a locked login Keychain even while the desktop can sign. Copying private keys, changing Keychain access controls, or injecting a password is unnecessary when the existing desktop session already has access.
+- **Rationale:** the same certificate and binary failed from SSH but signed successfully in the GUI domain; the full device build then passed and installed.
+- **Consequences:** the Mac needs a logged-in desktop user and existing signing authorization. Jobs are one-shot, scoped to the build/test, and removed after success, failure, or interruption. Team and device values remain local configuration.
+- **Revisit when:** a dedicated CI-signing environment replaces interactive development signing, or desktop-session execution is unavailable.

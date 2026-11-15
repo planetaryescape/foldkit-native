@@ -135,3 +135,50 @@ This source was implemented on Linux; Apple build/runtime checks must be
 performed separately and recorded by the session running them.
 See the [implementation log](../../docs/implementation-log.md) for actual
 checks, failed attempts, and the physical-device signing limitation.
+
+## GUI-session device runner
+
+When SSH signing fails because its Keychain session differs from the unlocked
+desktop session, run Xcode through a transient LaunchAgent in the current user's
+`gui/<uid>` launch domain. This does not unlock a Keychain, change its ACLs,
+request passwords, or install a persistent agent.
+
+On the Mac, log in to the desktop as the same user, unlock the login Keychain
+through the normal desktop workflow, connect the trusted iPhone, and enable
+Developer Mode. Xcode must already have the signing account configured.
+From the repository root, generate the project and bundle before running:
+
+```sh
+bun run build:counter
+xcodegen generate --spec native/apple/project.yml
+export APPLE_DEVELOPMENT_TEAM='YOUR_TEAM_ID'
+export IPHONE_DEVICE='YOUR_DEVICE_ID'
+bun run scripts/apple-device.ts build-for-testing
+bun run scripts/apple-device.ts test
+```
+
+`build-for-testing` builds signed test products; `test` builds and runs the full
+UI suite and is the default when no mode is supplied. `build` is also accepted
+as an alias for `build-for-testing`.
+An optional second argument selects tests, for example
+`FoldkitNativeUITests/CounterTests/testIncrement`. Use actual class and method
+names from the test source. `test-without-building` reuses the previous runner
+build in `.local/device-derived-data`; rebuild after source changes.
+Do not run concurrent commands against that shared DerivedData directory.
+
+Each invocation prints a unique local run directory under `.local/apple-device/`
+containing `stdout.log`, `stderr.log`, an atomic `exit-status`, and the Xcode
+result bundle when produced. Captured stdout/stderr and the result-bundle path
+are printed after completion. Logs can contain signing and device identifiers:
+inspect them locally, do not publish them. The runner reports the Xcode exit
+status, fails on a nonzero status, and waits for filesystem completion events
+with a 30-minute limit rather than polling.
+
+On completion, failure, timeout, SIGINT, or SIGTERM, Effect scope cleanup boots
+out only this invocation's job and removes its generated plist and wrapper.
+Launchd owns the job's process group. No files are installed in
+`~/Library/LaunchAgents`, and the job has no `KeepAlive`. A forced process kill,
+machine crash, or inaccessible launch domain can prevent cleanup; the locally
+reported job label can be removed with `launchctl bootout gui/<uid>/<label>`.
+Retained logs, results, and DerivedData are deliberately local and ignored.
+This runner is macOS-only; Linux checks do not verify GUI launch or signing.

@@ -1,6 +1,6 @@
 # 01: Architecture
 
-Status: proposed mechanisms implementing owner-accepted goals, with counter-host implementation in progress. The minimal project-owned runner is accepted. No native behavior is verified here.
+Status: the bounded counter host is implemented and physically verified; general native rendering and development-host mechanisms remain proposed. See the implementation log for evidence and limits.
 
 ## Runtime boundary
 
@@ -13,7 +13,7 @@ native control event
   -> native view projection / asynchronous result message
 ```
 
-This flow does not use Foldkit's browser lifecycle/message runner or assert that its renderer is replaceable. The bounded proof of concept reuses public command/update APIs from Foldkit 0.170.0 with Effect 4.1.4; our minimal experimental runner owns processing and command-effect execution. Public import compatibility is being checked. Record the exact reuse demonstrated by implementation, without claiming complete Foldkit runtime compatibility.
+This flow does not use Foldkit's browser lifecycle/message runner or assert that its renderer is replaceable. The bounded proof of concept reuses public command/update APIs from Foldkit 0.170.0 with Effect 4.1.4; our minimal experimental runner owns processing and command-effect execution. These narrow public imports have run in the native host on a physical iPhone. This is not complete Foldkit runtime compatibility.
 
 If upstream lacks a suitable public runtime hook, record the extraction gap for later. That does not block the counter-host proof of concept. Do not copy upstream internals to fill the gap.
 
@@ -24,7 +24,7 @@ If upstream lacks a suitable public runtime hook, record the extraction gap for 
 | Foldkit application        | Model, messages, transitions, command intent                                | Public APIs verified against the pinned dependency               |
 | Experimental native runner | Message processing, update invocation, command execution, session lifecycle | Project-owned bounded implementation, not upstream runtime reuse |
 | Effect runtime             | TypeScript services, asynchronous execution, cancellation, typed failures   | Composed at the application entrypoint                           |
-| JavaScript engine host     | Engine lifetime, callback scheduling, timers, bundle evaluation             | Native embedding adapter, engine not yet selected                |
+| JavaScript engine host     | Engine lifetime, callback scheduling, timers, bundle evaluation             | JavaScriptCore candidate with explicit timer and UTF-8 support   |
 | Native binding             | Native views, event conversion, UI-thread dispatch, resource release        | Explicit supported operations, not arbitrary object access       |
 | Development host           | Session lifetime, bundle loading, diagnostics, compatibility checks         | Versioned host and bundle contract                               |
 | Developer tooling          | Bundle production and development connection                                | Bun workflow with Effect-owned TypeScript orchestration          |

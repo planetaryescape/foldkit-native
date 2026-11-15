@@ -176,3 +176,64 @@ identifiers, signing configuration, screenshots, or crash reports are tracked.
 
 Delivery: pushed source, no release, no physical-device installation, and no
 completed M01 handoff. M01V and M02 are still unimplemented.
+
+## 2026-11-15: Resolve the signing security-session mismatch
+
+Correction to the earlier physical-device signing blocker: inspecting the
+Keychain from the SSH process confirmed it was locked in that security
+session. Unlocking or approving access in the desktop did not make that
+separate SSH session suitable for signing.
+
+A one-shot job bootstrapped into the current user's GUI launch domain signed
+the same binary with the same existing certificate successfully. Running
+`xcodebuild build-for-testing` through that domain also passed, and
+`devicectl` installed the resulting app on the physical iPhone.
+
+No certificates, provisioning credentials, Keychain passwords, or Keychain
+access-control settings were changed. The temporary signing and build jobs
+were removed after completion. Local launch-job files and logs remain under
+ignored `.local/`, not the user's persistent LaunchAgents directory.
+
+Physical-device UI tests are now running. Installation alone is not interaction
+evidence; their actual results must be recorded before claiming the counter
+milestone complete.
+
+## 2026-11-15: Physical iPhone counter verification
+
+Related: M01 and D008. Application source baseline: `9a786a8`; app/runtime
+code is unchanged from the previously verified native candidate. Versions:
+Foldkit 0.170.0, Effect 4.1.4, Xcode 27.2. The latest signed Debug build was
+installed and exercised on an iPhone 14 Pro running iOS 26.6.2.
+
+### Verification
+
+| Check                             | Result  | Evidence or limitation                                                              |
+| --------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| GUI-session `build-for-testing`   | Passed  | Uses the existing signing identity without credential or Keychain changes           |
+| Physical-device installation      | Passed  | Installed `org.planetaryescape.foldkitnative`                                       |
+| Complete physical-device UI suite | Passed  | Three tests, zero failures or skips; result platform reports iOS, not iOS Simulator |
+| Immediate increment               | Passed  | Native button updates visible count                                                 |
+| Delayed increment                 | Passed  | Native pending state and completion observed                                        |
+| Immediate tap during pending work | Passed  | Visible count changes while the delayed command remains pending                     |
+| Final app launch                  | Passed  | Latest installed app launched after the test run                                    |
+| Temporary GUI jobs                | Removed | Test/build jobs are not persistent launch agents                                    |
+
+The device initially needed unlocking before XCTest could start; once ready,
+the complete suite ran successfully. Screenshots and xcresult remain local.
+The shared-host explicit disposal probe also passes, while graceful UIKit
+scene disconnection/reconnection is still not directly covered on the phone.
+
+M01 is complete for the bounded native counter proof. This does not establish
+a TypeScript-authored native renderer or the reusable development host. M01V
+and M02 remain planned.
+
+Delivery: signed application installed, tested, and launched on the physical
+iPhone. A reusable Effect-based GUI-session device runner and this evidence
+are being prepared for an atomic commit; no framework package or store
+release has been published.
+
+The reusable `apple:device build-for-testing` runner subsequently passed on
+the Mac using the same GUI-session approach. A separate cleanup check found no
+remaining temporary Foldkit launch jobs and confirmed the generated job file
+was removed. The runner's argument, plist-escaping, and completion-watcher
+checks bring the TypeScript suite to fifteen passing tests.
